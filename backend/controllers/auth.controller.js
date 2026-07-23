@@ -31,7 +31,8 @@ function cookieOptions() {
 }
 
 function buildDevModeEmailExposure(emailResult, urlKey) {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment =
+  process.env.NODE_ENV === 'development' || process.env.SHOW_DEV_VERIFICATION_LINK === 'true';
   if (!isDevelopment || emailResult.delivered) {
     return {};
   }
