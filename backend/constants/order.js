@@ -1,0 +1,36 @@
+const ORDER_STATUS = {
+  PENDING: 'pending',
+  CONFIRMED: 'confirmed',
+  SHIPPING: 'shipping',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+};
+const ORDER_STATUS_VALUES = Object.values(ORDER_STATUS);
+
+const PAYMENT_METHOD = {
+  COD: 'cod',
+  STORE_PICKUP: 'store_pickup',
+  BANK_TRANSFER: 'bank_transfer',
+};
+const PAYMENT_METHOD_VALUES = Object.values(PAYMENT_METHOD);
+
+const SHIPPING_FEE_BY_PAYMENT_METHOD = {
+  [PAYMENT_METHOD.STORE_PICKUP]: 0,
+  [PAYMENT_METHOD.COD]: 30000,
+};
+
+const PAYMENT_STATUS = {
+  UNPAID: 'unpaid',
+  PAID: 'paid',
+};
+const PAYMENT_STATUS_VALUES = Object.values(PAYMENT_STATUS);
+
+module.exports = {
+  ORDER_STATUS,
+  ORDER_STATUS_VALUES,
+  PAYMENT_METHOD,
+  PAYMENT_METHOD_VALUES,
+  SHIPPING_FEE_BY_PAYMENT_METHOD,
+  PAYMENT_STATUS,
+  PAYMENT_STATUS_VALUES,
+};

@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: petcare-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_DAYS
+        value: 30
+      - key: CLIENT_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: EMAIL_VERIFICATION_EXPIRES_HOURS
+        value: 24
+      - key: PASSWORD_RESET_EXPIRES_MINUTES
+        value: 60
+      - key: RESEND_VERIFICATION_COOLDOWN_MINUTES
+        value: 2
+
+    disk:
+      name: petcare-uploads
+      mountPath: /opt/render/project/src/backend/uploads
+      sizeGB: 1
+
+  - type: web
+    name: petcare-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

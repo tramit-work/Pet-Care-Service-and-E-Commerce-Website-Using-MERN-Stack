@@ -1,0 +1,92 @@
+.account-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.95rem;
+  color: inherit;
+  padding: 0;
+  position: relative;
+}
+
+.account-menu-trigger i {
+  font-size: 1.5rem;
+}
+
+.account-login-indicator {
+  display: none;
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-success, #2E7D32);
+  border: 1.5px solid #fff;
+}
+
+.account-menu-name {
+  font-weight: 600;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 180px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1000;
+}
+
+.account-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.9rem;
+  color: #2d3748;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu-item:hover {
+  background: #f3f4f6;
+  color: var(--light-red, #DC143C);
+}
+
+.account-menu-logout {
+  color: #e53e3e;
+}
+
+@media screen and (max-width: 768px) {
+  .account-menu-name {
+    display: none;
+  }
+
+  .account-login-indicator {
+    display: block;
+  }
+}

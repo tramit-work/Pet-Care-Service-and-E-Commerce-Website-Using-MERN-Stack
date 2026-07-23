@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/petcare_system
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN:-15m}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - JWT_REFRESH_EXPIRES_DAYS=${JWT_REFRESH_EXPIRES_DAYS:-30}
+      - CLIENT_URL=${CLIENT_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    volumes:
+      - uploads_data:/app/uploads/products
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mongo_data:
+  uploads_data:

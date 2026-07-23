@@ -1,0 +1,4914 @@
+{
+  "info": {
+    "name": "PetCare API",
+    "_postman_id": "petcare-api-collection-v1",
+    "description": "Complete REST API test suite for the PetCare MERN backend. Uses environment variables for baseUrl and tokens. Generated to match the actual implemented Express routes/validators — no fabricated fields.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Đăng ký tài khoản mới. Tạo user chưa xác thực (isVerified:false), gửi email xác thực (hoặc trả verificationUrl nếu NODE_ENV=development và SMTP chưa cấu hình). KHÔNG tự đăng nhập.\n\n**Auth required:** None\n**Rate limited:** registerLimiter (5/hour)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyen Van A\",\n  \"email\": \"nguyenvana@example.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "if (pm.response.json().verificationUrl) { pm.environment.set(\"verificationUrl\", pm.response.json().verificationUrl); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-email"
+              ]
+            },
+            "description": "Xác thực email bằng token nhận từ email (hoặc verificationUrl ở dev mode). Set biến `verificationToken` (lấy phần ?token= trong verificationUrl) trước khi chạy.\n\n**Auth required:** None",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resend Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/resend-verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "resend-verification"
+              ]
+            },
+            "description": "Gửi lại email xác thực. Có cooldown (RESEND_VERIFICATION_COOLDOWN_MINUTES).\n\n**Auth required:** None\n**Rate limited:** emailActionLimiter (5/15min)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguyenvana@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập user thường (role=user). Trả về `token` (access token, 15 phút) + `user`, đồng thời set cookie httpOnly `petcare_refresh_token`. Chặn nếu email chưa xác thực (403, details.code=EMAIL_NOT_VERIFIED) hoặc tài khoản là admin.\n\n**Auth required:** None\n**Rate limited:** loginLimiter (10/15min)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguyenvana@example.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"accessToken\", json.token);",
+                  "if (json.user && json.user._id) { pm.environment.set(\"userId\", json.user._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Invalid Password (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Negative test: sai mật khẩu. Kỳ vọng 401.\n\n**Auth required:** None",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguyenvana@example.com\",\n  \"password\": \"WrongPassword999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/admin-login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "admin-login"
+              ]
+            },
+            "description": "Đăng nhập Admin/Editor riêng — access token 7 ngày, KHÔNG có refresh token/session list (kiến trúc đơn giản hóa cho Admin).\n\n**Auth required:** None\n**Rate limited:** loginLimiter",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@petcare.com\",\n  \"password\": \"AdminPassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"adminToken\", json.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Lấy thông tin user hiện tại từ access token. Dùng để xác nhận token còn hợp lệ (Frontend gọi khi tải trang).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Cấp Access Token mới bằng Refresh Token (đọc từ httpOnly cookie `petcare_refresh_token` — Postman cần bật cookie jar/interceptor để cookie tự gửi kèm). Xoay vòng refresh token.\n\n**Auth required:** Refresh cookie (không dùng Bearer)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); pm.environment.set(\"accessToken\", json.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Đăng xuất thiết bị hiện tại — xóa refresh token entry khớp cookie hiện tại + clear cookie. An toàn gọi lại nhiều lần (no-op nếu không khớp token nào).\n\n**Auth required:** Refresh cookie"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Yêu cầu đặt lại mật khẩu. LUÔN trả cùng 1 message chung dù email có tồn tại hay không (tránh lộ thông tin tài khoản nào tồn tại).\n\n**Auth required:** None\n**Rate limited:** emailActionLimiter",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguyenvana@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Đặt lại mật khẩu bằng token nhận từ email Forgot Password. Thu hồi TẤT CẢ session hiện có sau khi thành công. Set biến `resetToken` trước khi chạy.\n\n**Auth required:** None",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"password\": \"NewPassword456\",\n  \"confirmPassword\": \"NewPassword456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Google Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "google"
+              ]
+            },
+            "description": "Đăng nhập/liên kết tài khoản bằng Google ID Token (credential lấy từ Google Identity Services ở Frontend — không thể tạo thủ công trong Postman, chỉ dùng để verify route tồn tại/lỗi hợp lệ). Nếu email đã có tài khoản thường, tự liên kết; nếu chưa, tạo tài khoản mới đã xác thực.\n\n**Auth required:** None",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential\": \"{{googleIdToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Rejects invalid/placeholder credential\", function () { pm.expect(pm.response.code).to.be.oneOf([400,401]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "sessions"
+              ]
+            },
+            "description": "Danh sách phiên đăng nhập hiện có (thiết bị/trình duyệt/HĐH/IP/thời gian), có đánh dấu `isCurrent`.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data.length > 0) { pm.environment.set(\"sessionId\", json.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke One Session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "sessions",
+                "{{sessionId}}"
+              ]
+            },
+            "description": "Thu hồi 1 phiên đăng nhập cụ thể theo id (lấy từ List Sessions).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke All Sessions (Logout All Devices)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "sessions"
+              ]
+            },
+            "description": "Đăng xuất khỏi TẤT CẢ thiết bị — xóa toàn bộ refreshTokens + clear cookie hiện tại.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized Access (Negative)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "sessions"
+              ]
+            },
+            "description": "Negative test: gọi route yêu cầu xác thực mà KHÔNG có Bearer token. Kỳ vọng 401.\n\n**Auth required:** None (deliberately omitted)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid/Malformed Token (Negative)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "sessions"
+              ]
+            },
+            "description": "Negative test: Bearer token sai định dạng/không hợp lệ. Kỳ vọng 401.\n\n**Auth required:** Bearer (invalid value deliberately)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "this.is.not.a.valid.jwt",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Xem hồ sơ cá nhân (dùng chung route /auth/me).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
+            },
+            "description": "Cập nhật hồ sơ (fullName/phone/address/avatar — tất cả optional). `avatar` là URL đã upload sẵn qua POST /api/uploads/avatar.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyen Van A Updated\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 Đường ABC, Quận 1, TP.HCM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Đổi mật khẩu. Tài khoản Google chưa từng có mật khẩu có thể bỏ qua `currentPassword` (đặt mật khẩu lần đầu).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing Required Field (Negative)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Negative test: thiếu `newPassword` bắt buộc. Kỳ vọng 422 (validation error).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=1&limit=10&sort=newest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest"
+                }
+              ]
+            },
+            "description": "Danh sách sản phẩm (public). Luôn chỉ trả `status=active`. Hỗ trợ query: page, limit, sort, category, search, minPrice, maxPrice, rating...\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=poodle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "poodle"
+                }
+              ]
+            },
+            "description": "Tìm kiếm sản phẩm theo tên (regex, không phân biệt hoa thường).\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "Chi tiết 1 sản phẩm theo id. 404 nếu không tồn tại hoặc không active.\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Product ID (Negative)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/000000000000000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "000000000000000000000000"
+              ]
+            },
+            "description": "Negative test: ObjectId hợp lệ về định dạng nhưng không tồn tại. Kỳ vọng 404.\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            },
+            "description": "Tạo sản phẩm mới. `category` phải là ObjectId của 1 Category có thật.\n\n**Auth required:** Bearer {{adminToken}} (Admin hoặc Editor)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Thức ăn hạt cho mèo Royal Canin 2kg\",\n  \"category\": \"{{categoryId}}\",\n  \"price\": 350000,\n  \"image\": \"https://example.com/images/royal-canin.png\",\n  \"description\": \"Thức ăn hạt cao cấp cho mèo trưởng thành\",\n  \"brand\": \"Royal Canin\",\n  \"stock\": 50,\n  \"isNewArrival\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data._id) { pm.environment.set(\"productId\", json.data._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing Required Fields (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            },
+            "description": "Negative test: thiếu name/category/price/image bắt buộc. Kỳ vọng 422 kèm details liệt kê từng field lỗi.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Thiếu các field bắt buộc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "Cập nhật sản phẩm (partial update — chỉ gửi field cần đổi).\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 320000,\n  \"stock\": 45\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change Stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "Đổi tồn kho về 0 để test luồng 'Hết hàng' (chặn Checkout/Cart ở phần khác).\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "Xóa HẲN sản phẩm (hard delete). Cẩn thận: chỉ chạy sau khi đã test xong các request khác dùng {{productId}}.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized Create - Regular User (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            },
+            "description": "Negative test: user thường (role=user) cố tạo Product. Kỳ vọng 403 (chỉ Admin/Editor được phép).\n\n**Auth required:** Bearer {{accessToken}} (user thường — không đủ quyền)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test\",\n  \"category\": \"{{categoryId}}\",\n  \"price\": 1000,\n  \"image\": \"https://example.com/x.png\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "description": "Danh sách danh mục (public, mặc định chỉ active — hỗ trợ ?status= cho Admin).\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Category Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Chi tiết 1 danh mục.\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "description": "Tạo danh mục mới.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phụ kiện thú cưng\",\n  \"description\": \"Vòng cổ, dây dắt, lồng vận chuyển...\",\n  \"displayOrder\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data._id) { pm.environment.set(\"categoryId\", json.data._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Cập nhật danh mục.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phụ kiện thú cưng cao cấp\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Xóa danh mục — BỊ CHẶN (409) nếu còn sản phẩm nào thuộc danh mục này, đảm bảo Product không bị mồ côi.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Category In Use (Negative)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Negative test: xóa danh mục ĐANG còn sản phẩm tham chiếu. Kỳ vọng 409 kèm số lượng sản phẩm còn lại.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pets",
+      "item": [
+        {
+          "name": "Get All Pets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Danh sách thú cưng đang rao bán (luôn chỉ status=active).\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Pet Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}"
+              ]
+            },
+            "description": "Chi tiết 1 thú cưng.\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Pet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets"
+              ]
+            },
+            "description": "Tạo thú cưng mới. `species` phải là 'Dog' hoặc 'Cat', `gender` là 'male' hoặc 'female'.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bông\",\n  \"species\": \"Dog\",\n  \"price\": 5000000,\n  \"image\": \"https://example.com/images/bong.png\",\n  \"breed\": \"Poodle\",\n  \"gender\": \"female\",\n  \"age\": 3,\n  \"weight\": 2.5,\n  \"color\": \"Trắng\",\n  \"vaccination\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data._id) { pm.environment.set(\"petId\", json.data._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}"
+              ]
+            },
+            "description": "Cập nhật thú cưng.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 4800000,\n  \"adoptionStatus\": \"reserved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}"
+              ]
+            },
+            "description": "Xóa thú cưng.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xem giỏ hàng hiện tại (tự tạo giỏ rỗng nếu chưa có). Tự dọn các item mồ côi (sản phẩm đã bị xóa hẳn).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Item To Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items"
+              ]
+            },
+            "description": "Thêm sản phẩm vào giỏ (cộng dồn nếu đã có). Kiểm tra tồn tại + còn active + đủ tồn kho.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Item - Out of Stock (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items"
+              ]
+            },
+            "description": "Negative test: thêm số lượng vượt xa tồn kho thực tế. Kỳ vọng 400 kèm message nêu rõ tồn kho còn lại.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 9999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Item Quantity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                "{{productId}}"
+              ]
+            },
+            "description": "Đổi số lượng 1 item trong giỏ. quantity<=0 sẽ xóa item khỏi giỏ. Kiểm tra tồn kho khi tăng.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove Item From Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                "{{productId}}"
+              ]
+            },
+            "description": "Xóa 1 sản phẩm khỏi giỏ.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart"
+              ]
+            },
+            "description": "Xóa toàn bộ giỏ hàng (về rỗng).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wishlist",
+      "item": [
+        {
+          "name": "Get Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wishlist"
+              ]
+            },
+            "description": "Danh sách yêu thích (đã populate đủ thông tin sản phẩm). Tự dọn các bản ghi mồ côi (sản phẩm đã xóa hẳn).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add To Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wishlist"
+              ]
+            },
+            "description": "Thêm sản phẩm vào yêu thích. Idempotent — bấm nhiều lần không tạo trùng, không báo lỗi.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product\": \"{{productId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add To Wishlist - Duplicate (Negative/Idempotency)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wishlist"
+              ]
+            },
+            "description": "Test trùng lặp: gọi lại lần 2 với CÙNG productId. Kỳ vọng 200 (không phải 201) trả về bản ghi CŨ, không tạo bản ghi mới.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product\": \"{{productId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove From Wishlist",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/wishlist/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wishlist",
+                "{{productId}}"
+              ]
+            },
+            "description": "Bỏ yêu thích 1 sản phẩm.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Checkout & Orders",
+      "item": [
+        {
+          "name": "Checkout (Create Order - COD)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Đặt hàng từ giỏ hàng hiện tại (COD). `clientRequestId` (UUID ngẫu nhiên, dùng {{$guid}} của Postman) chống tạo đơn trùng nếu gửi lại cùng request. Validate: giỏ không rỗng, sản phẩm còn tồn tại + đủ tồn kho. Giỏ hàng tự động bị xóa sau khi đặt thành công. Gửi email xác nhận (hoặc log console nếu SMTP chưa cấu hình).\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 Đường ABC, Quận 1, TP.HCM\",\n  \"note\": \"Giao giờ hành chính\",\n  \"paymentMethod\": \"cod\",\n  \"clientRequestId\": \"{{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data._id) { pm.environment.set(\"orderId\", json.data._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout - Duplicate Request (Idempotency)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Test chống trùng: gửi lại request Checkout với CÙNG clientRequestId đã dùng ở request trước (set biến `lastClientRequestId` = giá trị đã dùng). Kỳ vọng 200 trả về ĐÚNG đơn đã tạo, KHÔNG tạo đơn mới, KHÔNG trừ kho thêm lần nữa.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 Đường ABC, Quận 1, TP.HCM\",\n  \"paymentMethod\": \"cod\",\n  \"clientRequestId\": \"{{lastClientRequestId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout - Empty Cart (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Negative test: Checkout khi giỏ hàng rỗng (dọn giỏ trước bằng Clear Cart). Kỳ vọng 400.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 ABC\",\n  \"paymentMethod\": \"cod\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout - Out of Stock (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Negative test: giỏ hàng có sản phẩm đã hết tồn kho (set stock=0 qua Products > Change Stock trước, rồi Add To Cart, rồi Checkout). Kỳ vọng 400 nêu rõ sản phẩm nào không đủ tồn kho.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 ABC\",\n  \"paymentMethod\": \"cod\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout - Missing Required Fields (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Negative test: thiếu receiverName/phone/address bắt buộc. Kỳ vọng 422.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"cod\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lịch sử đơn hàng — user thường tự động chỉ thấy đơn của mình; Admin thấy tất cả.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": "Chi tiết 1 đơn hàng.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel My Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "cancel"
+              ]
+            },
+            "description": "User tự hủy đơn của MÌNH — chỉ khi đơn còn ở trạng thái Pending.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Update Order Status (Pending to Confirmed)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "Admin đổi trạng thái đơn hàng. Chỉ cho phép chuyển ĐÚNG luồng: Pending->Confirmed/Cancelled, Confirmed->Shipping/Cancelled, Shipping->Completed. Completed/Cancelled là trạng thái cuối.\n\n**Auth required:** Bearer {{adminToken}} (Admin only)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Update Order Status (Confirmed to Shipping)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "Bước tiếp theo trong luồng hợp lệ.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"shipping\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Update Order Status (Shipping to Completed)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "Hoàn tất đơn hàng — cần trạng thái Completed để có thể viết Review sau này.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Invalid Transition (Negative)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "Negative test: cố chuyển từ Completed NGƯỢC LẠI về Pending. Kỳ vọng 409 (Conflict) — chặn transition không hợp lệ.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"pending\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Non-Admin Update Status (Negative)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "Negative test: user thường cố đổi trạng thái đơn hàng. Kỳ vọng 403.\n\n**Auth required:** Bearer {{accessToken}} (user thường)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Đặt lịch dịch vụ. `serviceType` PHẢI khớp CHÍNH XÁC 1 trong 5 giá trị: 'Spa Cho Thú Cưng', 'Đăng Ký Tiêm Phòng', 'Khám Bệnh Đúng Hẹn', 'Dịch Vụ Vận Chuyển', 'Lên Lịch Huấn Luyện'.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"email\": \"nguyenvana@example.com\",\n  \"serviceType\": \"Spa Cho Thú Cưng\",\n  \"bookingDate\": \"2026-08-15\",\n  \"bookingTime\": \"14:00\",\n  \"note\": \"Bé nhà em hơi nhát, mong nhân viên nhẹ nhàng\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data._id) { pm.environment.set(\"bookingId\", json.data._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Service Type (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Negative test: serviceType không khớp 5 giá trị hợp lệ. Kỳ vọng 422.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Nguyen Van A\",\n  \"phone\": \"0901234567\",\n  \"serviceType\": \"Dịch Vụ Không Tồn Tại\",\n  \"bookingDate\": \"2026-08-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Bookings (History)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lịch sử đặt lịch — user thường tự động chỉ thấy lịch của mình; Admin thấy tất cả.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Booking Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Chi tiết 1 lịch đặt.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Confirm Booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Admin xác nhận lịch đặt (Pending -> Confirmed). Chỉ Admin/Editor được đổi trạng thái.\n\n**Auth required:** Bearer {{adminToken}} (Admin hoặc Editor)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Complete Booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Hoàn tất lịch đặt (Confirmed -> Completed).\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Invalid Status Transition (Negative)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Negative test: chuyển ngược từ Completed về Pending. Kỳ vọng 409.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"pending\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Delete Booking",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Xóa lịch đặt (Admin/Editor only).\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Regular User Cannot Update Status (Negative)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Negative test: user thường không có quyền Admin/Editor cố đổi trạng thái booking (kể cả booking của chính họ). Kỳ vọng 403 — đây là giới hạn CÓ CHỦ ĐÍCH của hệ thống (user hiện không tự hủy được lịch của mình).\n\n**Auth required:** Bearer {{accessToken}} (user thường)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get Public Reviews For Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews?product={{productId}}&page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "product",
+                  "value": "{{productId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Danh sách review công khai của 1 sản phẩm + phân phối rating (chỉ status=active).\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "Viết review — CHỈ được phép nếu: đơn hàng thuộc về chính user, đơn hàng ở trạng thái Completed, và sản phẩm nằm trong đơn đó. Tự động cập nhật lại rating trung bình + numReviews của Product.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": \"{{orderId}}\",\n  \"product\": \"{{productId}}\",\n  \"rating\": 5,\n  \"comment\": \"Sản phẩm rất tốt, giao hàng nhanh, đóng gói cẩn thận!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data._id) { pm.environment.set(\"reviewId\", json.data._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Review - Not a Verified Purchase (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "Negative test: product không nằm trong đơn hàng đã chọn. Kỳ vọng 400.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": \"{{orderId}}\",\n  \"product\": \"000000000000000000000000\",\n  \"rating\": 5,\n  \"comment\": \"Sản phẩm không có trong đơn\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Review - Duplicate (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "Negative test: đã review sản phẩm này cho đơn này rồi (gọi lại Create Review lần 2 với cùng order+product). Kỳ vọng 409.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": \"{{orderId}}\",\n  \"product\": \"{{productId}}\",\n  \"rating\": 4,\n  \"comment\": \"Đánh giá lại lần 2 cho cùng đơn\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "Sửa review của chính mình — tự động tính lại rating trung bình của Product.\n\n**Auth required:** Bearer {{accessToken}} (phải là chủ review)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Cập nhật lại: dùng thêm 1 tuần vẫn ổn, chỉnh còn 4 sao vì giao hơi chậm.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Review Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "Chi tiết 1 review.\n\n**Auth required:** Bearer {{accessToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - List All Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/admin?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "admin"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Admin xem TẤT CẢ review (kể cả đã ẩn), hỗ trợ filter/search.\n\n**Auth required:** Bearer {{adminToken}} (Admin only)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Hide Review (Moderation)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{reviewId}}",
+                "status"
+              ]
+            },
+            "description": "Admin ẩn 1 review vi phạm (không xóa hẳn — soft toggle status).\n\n**Auth required:** Bearer {{adminToken}} (Admin only)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Restore Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{reviewId}}",
+                "status"
+              ]
+            },
+            "description": "Admin khôi phục lại review đã ẩn.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Upload",
+      "item": [
+        {
+          "name": "Upload Avatar (Valid Image)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "avatar"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "Upload avatar cho chính user hiện tại. Field name PHẢI là `image`. Chọn 1 file ảnh JPG/PNG/WEBP <5MB trong tab Body > form-data.\n\n**Auth required:** Bearer {{accessToken}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data.url) { pm.environment.set(\"avatarUrl\", json.data.url); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Single Image - Admin/Editor (Product/Pet/Category)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "image"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "Upload 1 ảnh dùng cho Product/Pet/Category (Admin/Editor only). Field name `image`.\n\n**Auth required:** Bearer {{adminToken}} (role Admin hoặc Editor)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Gallery Images (Multiple)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "images"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "Upload nhiều ảnh cùng lúc (field name `images`, lặp lại key cho từng file) — dùng cho gallery Product/Pet. Giới hạn tối đa 10 ảnh/lần.\n\n**Auth required:** Bearer {{adminToken}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid File Type (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "image"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "Negative test: chọn 1 file KHÔNG phải ảnh (VD .txt/.pdf) trong Body > form-data. Kỳ vọng 400 với message liệt kê định dạng cho phép (jpeg/jpg/png/webp).\n\n**Auth required:** Bearer {{adminToken}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Oversized File (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "image"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "Negative test: chọn 1 file ảnh > 5MB. Kỳ vọng 400 (LIMIT_FILE_SIZE -> thông báo 'Kích thước ảnh vượt quá 5MB').\n\n**Auth required:** Bearer {{adminToken}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing File (Negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "image"
+              ]
+            },
+            "description": "Negative test: gửi request KHÔNG kèm file nào. Kỳ vọng 400 ('Vui lòng chọn ảnh để upload').\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Số liệu tổng quan cho Admin Dashboard (đếm Products/Categories/Pets active, Orders/Bookings theo trạng thái, doanh thu...).\n\n**Auth required:** Bearer {{adminToken}} (Admin only — toàn bộ /api/admin/* chỉ Admin, Editor KHÔNG được vào)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Danh sách user, hỗ trợ search/filter theo role, trạng thái, đã xác thực email hay chưa.\n\n**Auth required:** Bearer {{adminToken}} (Admin only)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });",
+                  "const json = pm.response.json(); if (json.data && json.data.items && json.data.items.length > 0) { pm.environment.set(\"targetUserId\", json.data.items[0]._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{targetUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{targetUserId}}"
+              ]
+            },
+            "description": "Chi tiết 1 user kèm thống kê (số đơn hàng/lịch đặt/review/wishlist, địa chỉ đơn gần nhất).\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{targetUserId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{targetUserId}}",
+                "role"
+              ]
+            },
+            "description": "Đổi vai trò user (user/editor/admin). Admin không thể tự đổi role của chính mình.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"editor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User Status (Lock/Unlock)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{targetUserId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{targetUserId}}",
+                "status"
+              ]
+            },
+            "description": "Khóa/mở khóa tài khoản user. Admin không thể tự khóa chính mình.\n\n**Auth required:** Bearer {{adminToken}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"success is true\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Regular User Accessing Admin API (Negative - Forbidden)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Negative test (Security Journey 8): user thường (role=user) cố gọi API Admin. Kỳ vọng 403 Forbidden — role-based authorization chặn đúng.\n\n**Auth required:** Bearer {{accessToken}} (user thường — cố tình dùng sai token để test)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "No Token Accessing Admin API (Negative - Unauthorized)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Negative test: gọi API Admin mà KHÔNG có token nào. Kỳ vọng 401 Unauthorized.\n\n**Auth required:** None (deliberately omitted)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "item": [
+        {
+          "name": "404 Not Found (Unknown Route)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/this-route-does-not-exist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "this-route-does-not-exist"
+              ]
+            },
+            "description": "Negative test: gọi 1 route hoàn toàn không tồn tại trong hệ thống. Kỳ vọng 404.\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"success is false\", function () { const json = pm.response.json(); pm.expect(json.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Kiểm tra server còn sống (dùng để test 'Network failure' — nếu request này fail thì backend đang down/không kết nối được).\n\n**Auth required:** None"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": []
+}
