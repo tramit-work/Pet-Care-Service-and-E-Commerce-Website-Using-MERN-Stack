@@ -6,9 +6,9 @@ export const collectionCards = [
 ];
 
 export const shoppingPromoBanners = [
-  { id: 'promo-dog', image: '/images/shopping/chogolden.png', alt: 'Chó Golden Retriever', badge: 'SALE' },
-  { id: 'promo-cat', image: '/images/shopping/meomaincoon.png', alt: 'Mèo Maine Coon', badge: 'HOT' },
-  { id: 'promo-food', image: '/images/shopping/supthuong.png', alt: 'Súp thưởng cho thú cưng', badge: 'NEW' },
+  { id: 'promo-dog', image: '/images/home/sale1.png', alt: 'Sale 1', badge: 'SALE' },
+  { id: 'promo-cat', image: '/images/home/sale2.png', alt: 'Sale 2', badge: 'HOT' },
+  { id: 'promo-food', image: '/images/home/sale3.png', alt: 'Sale 3', badge: 'NEW' },
 ];
 
 export const categoryNavList = [
