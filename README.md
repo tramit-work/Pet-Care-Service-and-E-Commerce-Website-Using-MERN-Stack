@@ -1,122 +1,459 @@
-# PetCare System (MERN)
+# PetCare System – MERN Full Stack Pet Shop & Pet Service Management
 
-Phiên bản MERN Stack được chuyển đổi từ project Flask "Pet Shop" cũ. Toàn bộ giao diện
-(HTML/CSS/màu sắc/layout/responsive/hình ảnh) được giữ nguyên; chỉ thay đổi kiến trúc
-kỹ thuật sang MongoDB + Express + React + Node.js.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![React](https://img.shields.io/badge/Frontend-React%20(Vite)-61DAFB.svg)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js-339933.svg)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Framework-Express.js-000000.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248.svg)](https://www.mongodb.com/)
+[![GitHub](https://img.shields.io/badge/GitHub-PetCare-blue.svg)](https://github.com/)
 
-## Trạng thái hiện tại: Bước 2 — React Layout dùng chung (Navbar, Footer, Router)
+---
 
-Đã hoàn thành: Layout dùng chung (Navbar + Footer + Router), tách thành nhiều component nhỏ.
-Home/Shopping/Service/Contact hiện là **placeholder tạm thời**, nội dung thật sẽ lần lượt
-được xây ở Bước 3-6 theo đúng lộ trình.
+# Giới thiệu
 
-## Cấu trúc thư mục
+**PetCare System** là hệ thống quản lý cửa hàng và dịch vụ chăm sóc thú cưng được phát triển theo kiến trúc **MERN Stack (MongoDB, Express.js, React.js, Node.js)**.
 
+Hệ thống cung cấp đầy đủ chức năng cho:
+
+- Khách hàng mua sắm sản phẩm
+- Đặt lịch dịch vụ chăm sóc thú cưng
+- Quản lý thú cưng
+- Thanh toán đơn hàng
+- Đánh giá sản phẩm
+- Quản trị cửa hàng thông qua trang Admin
+
+Đây là đồ án tốt nghiệp với mục tiêu xây dựng một hệ thống thương mại điện tử hiện đại, bảo mật và có khả năng mở rộng.
+
+---
+
+# Mục tiêu dự án
+
+PetCare được xây dựng nhằm:
+
+- Xây dựng Website thương mại điện tử cho cửa hàng thú cưng.
+- Quản lý sản phẩm, thú cưng và dịch vụ.
+- Hỗ trợ đặt lịch Spa, Tiêm phòng và Chăm sóc thú cưng.
+- Tích hợp Authentication hiện đại.
+- Áp dụng kiến trúc MERN Stack.
+- Thiết kế Responsive trên Desktop, Tablet và Mobile.
+- Xây dựng RESTful API theo chuẩn.
+
+---
+
+# Chức năng chính
+
+## Người dùng (Customer)
+
+- Đăng ký tài khoản
+- Đăng nhập
+- Google OAuth Login
+- Xác thực Email
+- Quên mật khẩu
+- Quản lý Profile
+- Quản lý Avatar
+- Đổi mật khẩu
+- Quản lý Session đăng nhập
+- Xem lịch sử đơn hàng
+- Theo dõi Booking
+- Đánh giá sản phẩm
+
+---
+
+## Mua sắm
+
+- Danh sách sản phẩm
+- Danh mục sản phẩm
+- Tìm kiếm
+- Lọc theo giá
+- Lọc theo đánh giá
+- Sắp xếp
+- Quick View
+- Wishlist
+- Shopping Cart
+- Checkout
+- Đặt hàng
+- Theo dõi trạng thái đơn hàng
+
+---
+
+## Thú cưng
+
+- Danh sách thú cưng
+- Chi tiết thú cưng
+- Quản lý trạng thái nhận nuôi
+- Thông tin sức khỏe
+- Tiêm phòng
+- Hình ảnh
+
+---
+
+## Dịch vụ
+
+- Spa
+- Grooming
+- Vaccination
+- Health Check
+- Pet Transport
+- Pet Training
+
+Khách hàng có thể:
+
+- Đặt lịch
+- Xem lịch sử
+- Theo dõi trạng thái
+
+---
+
+## Review
+
+- Đánh giá sau khi mua
+- Chỉnh sửa đánh giá
+- Rating trung bình
+- Quản trị viên kiểm duyệt Review
+
+---
+
+## Quản trị viên (Admin)
+
+- Dashboard
+- Quản lý Users
+- Quản lý Products
+- Quản lý Categories
+- Quản lý Pets
+- Quản lý Orders
+- Quản lý Bookings
+- Quản lý Reviews
+- Upload hình ảnh
+
+---
+
+# Kiến trúc hệ thống
+
+```text
+React (Vite)
+        │
+        ▼
+RESTful API
+        │
+Express.js
+        │
+Business Logic
+        │
+MongoDB + Mongoose
 ```
-petcare-system/
-├── backend/            # Node.js + Express + MongoDB (Mongoose)
-│   ├── config/         # Kết nối database
-│   ├── controllers/    # Xử lý logic request/response (sẽ thêm từ Bước 3)
-│   ├── middleware/      # notFound, errorHandler (đã có), auth/role (sẽ thêm)
-│   ├── models/         # Schema Mongoose (sẽ thêm từ Bước 3)
-│   ├── routes/          # Định tuyến API
-│   ├── services/        # Business logic tách riêng khỏi controllers
-│   ├── validators/      # Validation input (express-validator)
-│   ├── constants/       # Hằng số dùng chung (HTTP status, roles...)
-│   ├── utils/            # Helper (asyncHandler, ApiError...)
-│   ├── uploads/          # Ảnh upload qua Multer (Bước 9)
-│   └── server.js         # Entry point
-├── frontend/            # React (Vite) + React Router + Axios + Context API
-│   ├── public/images/    # Ảnh tĩnh copy nguyên vẹn từ Flask project
-│   └── src/
-│       ├── api/               # axiosClient dùng chung
-│       ├── assets/styles/     # style.css gốc (2 bổ sung nhỏ: .nav-menu a.active, .footer-bottom)
-│       ├── components/
-│       │   ├── layout/        # Layout.jsx (Navbar + Outlet + Footer)
-│       │   ├── navbar/        # Navbar, NavLogo, NavMenu, NavIcons, NavSearch
-│       │   ├── footer/        # Footer, FooterNewsletter, FooterContactInfo, FooterLinkList, FooterBottom
-│       │   └── common/        # ComingSoonNotice (placeholder dùng chung, sẽ xoá dần ở Bước 3-6)
-│       ├── context/            # AuthContext
-│       ├── pages/               # HomePage/ShoppingPage/ServicePage/ContactPage/LoginPage/RegisterPage/NotFoundPage
-│       └── router/               # AppRouter (đã khai báo đủ route, bao gồm 404)
-├── docs/                # Tài liệu bổ sung
-├── postman/             # Postman collection (sẽ thêm dần theo từng API)
-└── README.md
+
+Hệ thống được xây dựng theo mô hình phân tầng:
+
+- Presentation Layer
+- API Layer
+- Business Layer
+- Data Layer
+
+---
+
+# Công nghệ sử dụng
+
+## Frontend
+
+- React.js
+- Vite
+- React Router DOM
+- Axios
+- Context API
+- CSS3
+
+---
+
+## Backend
+
+- Node.js
+- Express.js
+- JWT Authentication
+- Google OAuth
+- Multer
+- Nodemailer
+- bcryptjs
+
+---
+
+## Database
+
+- MongoDB
+- Mongoose
+
+---
+
+## Development Tools
+
+- Git
+- GitHub
+- Postman
+- MongoDB Compass
+- Visual Studio Code
+
+---
+
+# Cấu trúc thư mục
+
+```text
+PetCare/
+
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+├── backend/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── utils/
+│   ├── uploads/
+│   └── package.json
+│
+├── docs/
+│   ├── API_DOCUMENTATION.md
+│   ├── DATABASE_DOCUMENTATION.md
+│   ├── USER_GUIDE.md
+│   ├── ADMIN_GUIDE.md
+│   ├── DEPLOYMENT_GUIDE.md
+│   └── RELEASE_CHECKLIST.md
+│
+├── README.md
+└── LICENSE
 ```
 
-## Yêu cầu môi trường
+---
 
-- Node.js >= 18
-- MongoDB (local hoặc MongoDB Atlas)
+# Cơ sở dữ liệu
 
-## Cài đặt & chạy thử
+Hệ thống sử dụng **MongoDB** với các Collection chính:
 
-### Backend
+- Users
+- Products
+- Categories
+- Pets
+- Orders
+- Bookings
+- Reviews
+- Wishlist
+- Cart
+- Notifications
+
+Chi tiết:
+
+```text
+docs/DATABASE_DOCUMENTATION.md
+```
+
+---
+
+# RESTful API
+
+Backend xây dựng theo chuẩn RESTful API.
+
+Bao gồm:
+
+- Authentication
+- Users
+- Products
+- Categories
+- Pets
+- Booking
+- Cart
+- Wishlist
+- Orders
+- Checkout
+- Reviews
+- Upload
+- Admin
+
+Chi tiết:
+
+```text
+docs/API_DOCUMENTATION.md
+```
+
+---
+
+# Hướng dẫn cài đặt
+
+## Clone Project
+
+```bash
+git clone https://github.com/your-username/PetCare.git
+
+cd PetCare
+```
+
+---
+
+## Backend
 
 ```bash
 cd backend
-cp .env.example .env
-# Sửa MONGO_URI trong .env trỏ tới MongoDB thật của bạn (local hoặc Atlas)
+
 npm install
+
 npm run dev
 ```
 
-Kiểm tra: mở `http://localhost:5000/api/health` — nếu MongoDB kết nối đúng sẽ thấy
-`"mongo": "connected"`.
+---
 
-### Frontend
+## Frontend
 
 ```bash
 cd frontend
-cp .env.example .env
+
 npm install
+
 npm run dev
 ```
 
-Mở `http://localhost:5173` — sẽ thấy trang xác nhận scaffolding (logo + CSS gốc + trạng thái
-kết nối backend).
+---
 
-## Ghi chú kiến trúc đã thống nhất (áp dụng từ Bước 3 trở đi)
+# Environment Variables
 
-- **Pets và Products**: 2 collection MongoDB tách riêng. Trang *Shopping* chỉ hiển thị
-  `products`; trang *Home* hiển thị cả `pets` và `products` nổi bật.
-- **Giỏ hàng**: không tạo collection `cart` riêng. Giỏ hàng được lưu dưới dạng mảng nhúng
-  trong document `User` (`cart: [{ product, quantity }]`). Khi checkout, dữ liệu giỏ hàng
-  được copy sang một document `Order` mới (bất biến, dùng cho lịch sử đơn hàng), sau đó
-  giỏ hàng trong `User` được xóa.
-- **Chatbot/Rasa**: không port từ project Flask cũ sang, theo đúng yêu cầu phạm vi dự án.
+Backend
 
-## Roadmap các bước tiếp theo
+```env
+PORT=
 
-1. ~~Scaffolding~~ (đã xong)
-2. ~~React Layout dùng chung (Navbar, Footer, Router)~~ (đã xong)
-3. Trang Home (hero slider, sản phẩm/pet nổi bật, bài viết)
-4. Trang Shopping (danh sách `products`, tìm kiếm, lọc, phân trang)
-5. Trang Service (danh sách dịch vụ, form đặt lịch)
-6. Trang Contact (form liên hệ)
-7. Backend: User model + Auth (JWT, bcrypt) + middleware role
-8. Backend: Category/Pet/Product model + CRUD + list/detail/search/filter công khai
-9. Frontend: nối Home/Shopping với API thật
-10. Backend + Frontend: Giỏ hàng (nhúng trong User) & Order
-11. Backend + Frontend: Booking (đặt lịch dịch vụ)
-12. Backend + Frontend: Review (product & service)
-13. Backend + Frontend: Admin Dashboard + CRUD toàn bộ entity + upload ảnh Multer
-14. Hoàn thiện: validation toàn diện, README chi tiết, Postman collection đầy đủ
+NODE_ENV=
 
-## Ghi chú Bước 2: 2 lỗi đã phát hiện và khắc phục trong bản Flask gốc
+MONGO_URI=
 
-- **Menu mobile không hoạt động**: `script.js` gốc gọi `document.getElementById('navMenu')`
-  nhưng thẻ `<ul class="nav-menu">` không có `id="navMenu"` → menu mobile im lặng không phản
-  hồi khi bấm. Đã khắc phục bằng React state (`mobileMenuOpen`) toggle đúng class `.active`
-  mà CSS đã chờ sẵn.
-- **`script.js` bị crash giữa chừng trên `service.html`/`contact.html`**: dòng đầu file gọi
-  `document.getElementById('searchHomeBtn').addEventListener(...)` nhưng phần tử này chỉ tồn
-  tại trên `home.html`, khiến toàn bộ phần script phía sau (kể cả nút mở form đặt lịch spa)
-  không chạy trên 2 trang kia. Kiến trúc component-scoped của React loại bỏ hoàn toàn lỗi này.
+JWT_SECRET=
 
-## Ghi chú Bước 2: 2 thay đổi CSS nhỏ (có chủ đích, đã disclose)
+CLIENT_URL=
 
-- `.nav-menu a.active` — style cho `NavLink` đang active, dùng lại đúng màu `--light-red`
-  đã có sẵn ở `:hover` để đồng bộ thiết kế.
-- `.footer-bottom` — dòng copyright mới (bản gốc chưa từng có), dùng đúng font/màu đã dùng
-  trong `.footer-section`.
+SMTP_HOST=
+
+SMTP_PORT=
+
+SMTP_USER=
+
+SMTP_PASS=
+
+GOOGLE_CLIENT_ID=
+```
+
+Frontend
+
+```env
+VITE_API_BASE_URL=
+
+VITE_GOOGLE_CLIENT_ID=
+```
+
+---
+
+# Giao diện hệ thống
+
+> Thêm ảnh chụp màn hình tại đây.
+
+- Trang chủ
+- Shopping
+- Product Detail
+- Cart
+- Checkout
+- Booking
+- Profile
+- Admin Dashboard
+
+---
+
+# Deployment
+
+Hệ thống có thể triển khai trên:
+
+- Render
+- Railway
+- Vercel
+- Netlify
+- MongoDB Atlas
+
+Chi tiết:
+
+```text
+docs/DEPLOYMENT_GUIDE.md
+```
+
+---
+
+# Tài liệu dự án
+
+- API Documentation
+- Database Documentation
+- User Guide
+- Admin Guide
+- Deployment Guide
+- Release Checklist
+
+Tất cả được lưu trong thư mục:
+
+```text
+docs/
+```
+
+---
+
+# Kết quả đạt được
+
+- Xây dựng thành công Website MERN Full Stack.
+- Thiết kế Responsive.
+- Authentication bằng JWT.
+- Google OAuth.
+- Email Verification.
+- Shopping Cart.
+- Wishlist.
+- Booking Service.
+- Order Management.
+- Review System.
+- Admin Dashboard.
+- RESTful API.
+
+---
+
+# Hướng phát triển
+
+Trong tương lai, hệ thống có thể mở rộng:
+
+- Thanh toán VNPay / MoMo
+- Chatbot AI hỗ trợ khách hàng
+- Recommendation System
+- Pet Health Tracking
+- Notification Realtime (Socket.IO)
+- Docker & CI/CD
+- Cloud Storage (Cloudinary, AWS S3)
+
+---
+
+# Tác giả
+
+**Trâm Ngọc-Bảo Nguyễn**
+
+Faculty of Information Technology
+
+Van Lang University
+
+Ho Chi Minh City, Vietnam
+
+GitHub
+
+```text
+https://github.com/your-github
+```
+
+Email
+
+```text
+your-email@gmail.com
+```
+
+---
+
+# License
+
+This project is licensed under the MIT License.
