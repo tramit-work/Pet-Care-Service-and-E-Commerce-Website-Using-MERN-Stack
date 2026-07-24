@@ -241,11 +241,6 @@ Hệ thống sử dụng **MongoDB** với các Collection chính:
 - Cart
 - Notifications
 
-Chi tiết:
-
-```text
-docs/DATABASE_DOCUMENTATION.md
-```
 
 ---
 
@@ -282,9 +277,9 @@ docs/API_DOCUMENTATION.md
 ## Clone Project
 
 ```bash
-git clone https://github.com/your-username/PetCare.git
+git clone https://github.com/tramit-work/Pet-Care-Service-and-E-Commerce-Website-Using-MERN-Stack
 
-cd PetCare
+cd Pet-Care-Service-and-E-Commerce-Website-Using-MERN-Stack
 ```
 
 ---
@@ -313,57 +308,6 @@ npm run dev
 
 ---
 
-# Environment Variables
-
-Backend
-
-```env
-PORT=
-
-NODE_ENV=
-
-MONGO_URI=
-
-JWT_SECRET=
-
-CLIENT_URL=
-
-SMTP_HOST=
-
-SMTP_PORT=
-
-SMTP_USER=
-
-SMTP_PASS=
-
-GOOGLE_CLIENT_ID=
-```
-
-Frontend
-
-```env
-VITE_API_BASE_URL=
-
-VITE_GOOGLE_CLIENT_ID=
-```
-
----
-
-# Giao diện hệ thống
-
-> Thêm ảnh chụp màn hình tại đây.
-
-- Trang chủ
-- Shopping
-- Product Detail
-- Cart
-- Checkout
-- Booking
-- Profile
-- Admin Dashboard
-
----
-
 # Deployment
 
 Hệ thống có thể triển khai trên:
@@ -373,29 +317,6 @@ Hệ thống có thể triển khai trên:
 - Vercel
 - Netlify
 - MongoDB Atlas
-
-Chi tiết:
-
-```text
-docs/DEPLOYMENT_GUIDE.md
-```
-
----
-
-# Tài liệu dự án
-
-- API Documentation
-- Database Documentation
-- User Guide
-- Admin Guide
-- Deployment Guide
-- Release Checklist
-
-Tất cả được lưu trong thư mục:
-
-```text
-docs/
-```
 
 ---
 
@@ -443,17 +364,6 @@ Ho Chi Minh City, Vietnam
 GitHub
 
 ```text
-https://github.com/your-github
+https://github.com/tramit-work/Pet-Care-Service-and-E-Commerce-Website-Using-MERN-Stack
 ```
 
-Email
-
-```text
-your-email@gmail.com
-```
-
----
-
-# License
-
-This project is licensed under the MIT License.
